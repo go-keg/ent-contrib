@@ -2255,7 +2255,7 @@ var (
 	// TodoOrderFieldParentStatus orders by PARENT_STATUS.
 	TodoOrderFieldParentStatus = &TodoOrderField{
 		Value: func(t *Todo) (ent.Value, error) {
-			return t.Value("parent_status")
+			return t.GetValue("parent_status")
 		},
 		column: "parent_status",
 		toTerm: func(opts ...sql.OrderTermOption) todo.OrderOption {
@@ -2265,7 +2265,7 @@ var (
 			)
 		},
 		toCursor: func(t *Todo) Cursor {
-			cv, _ := t.Value("parent_status")
+			cv, _ := t.GetValue("parent_status")
 			return Cursor{
 				ID:    t.ID,
 				Value: cv,
@@ -2275,7 +2275,7 @@ var (
 	// TodoOrderFieldChildrenCount orders by CHILDREN_COUNT.
 	TodoOrderFieldChildrenCount = &TodoOrderField{
 		Value: func(t *Todo) (ent.Value, error) {
-			return t.Value("children_count")
+			return t.GetValue("children_count")
 		},
 		column: "children_count",
 		toTerm: func(opts ...sql.OrderTermOption) todo.OrderOption {
@@ -2284,7 +2284,7 @@ var (
 			)
 		},
 		toCursor: func(t *Todo) Cursor {
-			cv, _ := t.Value("children_count")
+			cv, _ := t.GetValue("children_count")
 			return Cursor{
 				ID:    t.ID,
 				Value: cv,
@@ -2294,7 +2294,7 @@ var (
 	// TodoOrderFieldCategoryText orders by CATEGORY_TEXT.
 	TodoOrderFieldCategoryText = &TodoOrderField{
 		Value: func(t *Todo) (ent.Value, error) {
-			return t.Value("category_text")
+			return t.GetValue("category_text")
 		},
 		column: "category_text",
 		toTerm: func(opts ...sql.OrderTermOption) todo.OrderOption {
@@ -2304,7 +2304,7 @@ var (
 			)
 		},
 		toCursor: func(t *Todo) Cursor {
-			cv, _ := t.Value("category_text")
+			cv, _ := t.GetValue("category_text")
 			return Cursor{
 				ID:    t.ID,
 				Value: cv,
