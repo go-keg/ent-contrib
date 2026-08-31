@@ -35,6 +35,7 @@ type CreateCategoryInput struct {
 	Count          *uint64
 	Strings        []string
 	TodoIDs        []uuid.UUID
+	ProjectIDs     []uuid.UUID
 	SubCategoryIDs []uuid.UUID
 }
 
@@ -59,6 +60,9 @@ func (i *CreateCategoryInput) Mutate(m *CategoryMutation) {
 	}
 	if v := i.TodoIDs; len(v) > 0 {
 		m.AddTodoIDs(v...)
+	}
+	if v := i.ProjectIDs; len(v) > 0 {
+		m.AddProjectIDs(v...)
 	}
 	if v := i.SubCategoryIDs; len(v) > 0 {
 		m.AddSubCategoryIDs(v...)
@@ -89,6 +93,9 @@ type UpdateCategoryInput struct {
 	ClearTodos           bool
 	AddTodoIDs           []uuid.UUID
 	RemoveTodoIDs        []uuid.UUID
+	ClearProjects        bool
+	AddProjectIDs        []uuid.UUID
+	RemoveProjectIDs     []uuid.UUID
 	ClearSubCategories   bool
 	AddSubCategoryIDs    []uuid.UUID
 	RemoveSubCategoryIDs []uuid.UUID
@@ -143,6 +150,15 @@ func (i *UpdateCategoryInput) Mutate(m *CategoryMutation) {
 	}
 	if v := i.RemoveTodoIDs; len(v) > 0 {
 		m.RemoveTodoIDs(v...)
+	}
+	if i.ClearProjects {
+		m.ClearProjects()
+	}
+	if v := i.AddProjectIDs; len(v) > 0 {
+		m.AddProjectIDs(v...)
+	}
+	if v := i.RemoveProjectIDs; len(v) > 0 {
+		m.RemoveProjectIDs(v...)
 	}
 	if i.ClearSubCategories {
 		m.ClearSubCategories()
@@ -299,6 +315,8 @@ func (c *TodoUpdateOne) SetInput(i UpdateTodoInput) *TodoUpdateOne {
 
 // CreateUserInput represents a mutation input for creating users.
 type CreateUserInput struct {
+	FirstName        *string
+	LastName         *string
 	Name             *string
 	Username         *uuid.UUID
 	Password         *string
@@ -310,6 +328,12 @@ type CreateUserInput struct {
 
 // Mutate applies the CreateUserInput on the UserMutation builder.
 func (i *CreateUserInput) Mutate(m *UserMutation) {
+	if v := i.FirstName; v != nil {
+		m.SetFirstName(*v)
+	}
+	if v := i.LastName; v != nil {
+		m.SetLastName(*v)
+	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}
@@ -341,6 +365,10 @@ func (c *UserCreate) SetInput(i CreateUserInput) *UserCreate {
 
 // UpdateUserInput represents a mutation input for updating users.
 type UpdateUserInput struct {
+	ClearFirstName   bool
+	FirstName        *string
+	ClearLastName    bool
+	LastName         *string
 	Name             *string
 	Username         *uuid.UUID
 	ClearPassword    bool
@@ -358,6 +386,18 @@ type UpdateUserInput struct {
 
 // Mutate applies the UpdateUserInput on the UserMutation builder.
 func (i *UpdateUserInput) Mutate(m *UserMutation) {
+	if i.ClearFirstName {
+		m.ClearFirstName()
+	}
+	if v := i.FirstName; v != nil {
+		m.SetFirstName(*v)
+	}
+	if i.ClearLastName {
+		m.ClearLastName()
+	}
+	if v := i.LastName; v != nil {
+		m.SetLastName(*v)
+	}
 	if v := i.Name; v != nil {
 		m.SetName(*v)
 	}

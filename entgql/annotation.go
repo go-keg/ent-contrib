@@ -54,6 +54,14 @@ type (
 		// CollectedFor indicates that this field should be collected when any of the specified GraphQL field names are queried.
 		// This is useful for resolver fields that depend on this field's value.
 		CollectedFor []string `json:"CollectedFor,omitempty"`
+		// InterfaceField groups this edge into a single GraphQL interface field.
+		// Multiple edges with the same InterfaceField value are combined into one field
+		// whose type is the common GraphQL interface implemented by all target types.
+		// The codegen generates the resolver method and collectField logic automatically.
+		//
+		// On a field of a SQL view backing an interface connection, it instead names
+		// the shared interface field the column stands in for (used for validation).
+		InterfaceField string `json:"InterfaceField,omitempty"`
 	}
 
 	// Directive to apply on the field/type.
@@ -194,10 +202,53 @@ func MapsTo(names ...string) Annotation {
 //
 // When `uppercaseName` is queried, the `name` field will be automatically fetched,
 // ensuring `unknownSeen` remains false and the field is available in the resolver.
+//
+// Multiple ent fields can be collected for the same GraphQL field by annotating each
+// of them with the same CollectedFor name. For example, a `fullName` resolver that
+// depends on both `first_name` and `last_name`:
+//
+//	field.String("first_name").
+//		Annotations(entgql.CollectedFor("fullName"))
+//	field.String("last_name").
+//		Annotations(entgql.CollectedFor("fullName"))
 func CollectedFor(names ...string) Annotation {
 	return Annotation{
 		CollectedFor: names,
 	}
+}
+
+// InterfaceField returns an annotation that marks an edge as part of a GraphQL interface field.
+//
+// When multiple edges on the same type share the same InterfaceField name ("group" case),
+// they are combined into a single field whose return type is the common interface:
+//
+//	func (Category) Edges() []ent.Edge {
+//		return []ent.Edge{
+//			edge.To("todos", Todo.Type).
+//				Annotations(entgql.RelayConnection(), entgql.InterfaceField("items")),
+//			edge.To("projects", Project.Type).
+//				Annotations(entgql.RelayConnection(), entgql.InterfaceField("items")),
+//		}
+//	}
+//
+// When a single edge has InterfaceField ("rename" case), the edge is exposed in GraphQL
+// with the given name instead of the edge name:
+//
+//	func (Todo) Edges() []ent.Edge {
+//		return []ent.Edge{
+//			edge.From("category", Category.Type).Ref("todos").Unique().
+//				Annotations(entgql.InterfaceField("parent")),
+//		}
+//	}
+//
+// In both cases, the codegen generates resolver methods and eager-loading logic automatically.
+//
+// On a field of a SQL view that backs an interface connection (see Type and
+// QueryField), it instead names the shared interface field the column stands in
+// for — typically an edge foreign-key alias like "category_id" behind the "owner"
+// edge — so entgql can validate that every implementor declares that field.
+func InterfaceField(name string) Annotation {
+	return Annotation{InterfaceField: name}
 }
 
 // Type returns a type mapping annotation.
@@ -223,6 +274,10 @@ func CollectedFor(names ...string) Annotation {
 //		Annotations(
 //			entgql.Type("TodoStatus"),
 //		)
+//
+// A SQL view may name a GraphQL interface with Type (alongside QueryField) to back
+// that interface's polymorphic connection: entgql paginates the view and resolves
+// each row to its concrete node instead of exposing the view as its own type.
 func Type(name string) Annotation {
 	return Annotation{Type: name}
 }
@@ -504,6 +559,9 @@ func (a Annotation) Merge(other schema.Annotation) schema.Annotation {
 	}
 	if len(ant.CollectedFor) > 0 {
 		a.CollectedFor = append(a.CollectedFor, ant.CollectedFor...)
+	}
+	if ant.InterfaceField != "" {
+		a.InterfaceField = ant.InterfaceField
 	}
 	return a
 }
